@@ -2,10 +2,18 @@
 
 namespace App\Providers;
 
+use App\Contracts\CourseRepositoryInterface;
+use App\Contracts\EnrollmentRepositoryInterface;
+use App\Contracts\StudentRepositoryInterface;
+use App\Contracts\TeacherRepositoryInterface;
 use App\Interfaces\CertificatesInterface;
 use App\Interfaces\EnrollmentSheetInterface;
 use App\Interfaces\InvoicingInterface;
 use App\Interfaces\MailingSystemInterface;
+use App\Repositories\CourseRepository;
+use App\Repositories\EnrollmentRepository;
+use App\Repositories\StudentRepository;
+use App\Repositories\TeacherRepository;
 use App\Services\Contracts\CourseReportServiceInterface;
 use App\Services\Contracts\CourseServiceInterface;
 use App\Services\Contracts\EnrollmentServiceInterface;
@@ -26,6 +34,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(TeacherRepositoryInterface::class, TeacherRepository::class);
+        $this->app->bind(CourseRepositoryInterface::class, CourseRepository::class);
+        $this->app->bind(StudentRepositoryInterface::class, StudentRepository::class);
+        $this->app->bind(EnrollmentRepositoryInterface::class, EnrollmentRepository::class);
+
         $this->app->bind(TeacherServiceInterface::class, TeacherService::class);
         $this->app->bind(CourseServiceInterface::class, CourseService::class);
         $this->app->bind(EnrollmentServiceInterface::class, EnrollmentService::class);

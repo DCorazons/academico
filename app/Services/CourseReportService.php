@@ -2,19 +2,16 @@
 
 namespace App\Services;
 
-use App\Models\Course;
+use App\Contracts\CourseRepositoryInterface;
 use App\Services\Contracts\CourseReportServiceInterface;
 use Illuminate\Database\Eloquent\Collection;
 
 class CourseReportService implements CourseReportServiceInterface
 {
+    public function __construct(private CourseRepositoryInterface $courses) {}
+
     public function forPeriod(int $periodId): Collection
     {
-        return Course::query()
-            ->without(['times', 'evaluationType'])
-            ->withCount('enrollments')
-            ->where('period_id', $periodId)
-            ->orderBy('id')
-            ->get();
+        return $this->courses->withEnrollmentCountForPeriod($periodId);
     }
 }
