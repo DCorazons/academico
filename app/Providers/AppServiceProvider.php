@@ -6,6 +6,14 @@ use App\Interfaces\CertificatesInterface;
 use App\Interfaces\EnrollmentSheetInterface;
 use App\Interfaces\InvoicingInterface;
 use App\Interfaces\MailingSystemInterface;
+use App\Services\Contracts\CourseReportServiceInterface;
+use App\Services\Contracts\CourseServiceInterface;
+use App\Services\Contracts\EnrollmentServiceInterface;
+use App\Services\Contracts\TeacherServiceInterface;
+use App\Services\CourseReportService;
+use App\Services\CourseService;
+use App\Services\EnrollmentService;
+use App\Services\TeacherService;
 use Filament\Tables\Enums\RecordActionsPosition;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Gate;
@@ -18,6 +26,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(TeacherServiceInterface::class, TeacherService::class);
+        $this->app->bind(CourseServiceInterface::class, CourseService::class);
+        $this->app->bind(EnrollmentServiceInterface::class, EnrollmentService::class);
+        $this->app->bind(CourseReportServiceInterface::class, CourseReportService::class);
+
         $this->app->bind(InvoicingInterface::class, function () {
             $driver = config('invoicing.invoicing_system');
 
