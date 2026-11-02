@@ -1,7 +1,25 @@
 <?php
 
+use App\Http\Controllers\Api\CourseController;
+use App\Http\Controllers\Api\CourseReportController;
+use App\Http\Controllers\Api\EnrollmentController;
+use App\Http\Controllers\Api\TeacherController;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
+
+// Endpoints under test. The controllers belong to each implementation branch.
+Route::middleware(['peak_memory', 'auth:api'])->group(function () {
+    Route::get('/teachers', [TeacherController::class, 'index']);
+    Route::get('/teachers/{id}', [TeacherController::class, 'show'])->whereNumber('id');
+
+    Route::get('/courses', [CourseController::class, 'index']);
+    Route::get('/courses/{id}', [CourseController::class, 'show'])->whereNumber('id');
+
+    Route::get('/students/{id}/enrollments', [EnrollmentController::class, 'index'])->whereNumber('id');
+    Route::post('/enrollments', [EnrollmentController::class, 'store']);
+
+    Route::get('/reports/courses', [CourseReportController::class, 'index']);
+});
 
 // Mock Ecuasolutions endpoints for local testing only
 if (app()->environment('local', 'testing')) {
