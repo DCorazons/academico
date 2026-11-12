@@ -3,18 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreEnrollmentRequest;
-use App\Http\Resources\CreatedEnrollmentResource;
 use App\Http\Resources\EnrollmentResource;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class EnrollmentController extends Controller
 {
-    private const PENDING_STATUS_ID = 1;
-
     public function index(int $id): AnonymousResourceCollection
     {
         abort_unless(DB::table('students')->where('id', $id)->exists(), 404);
@@ -39,27 +34,6 @@ class EnrollmentController extends Controller
             ->map(fn (object $row) => $this->toResourceData($row));
 
         return EnrollmentResource::collection($enrollments);
-    }
-
-    public function store(StoreEnrollmentRequest $request): JsonResponse
-    {
-        $attributes = [
-            'student_id' => $request->integer('student_id'),
-            'course_id' => $request->integer('course_id'),
-            'responsible_id' => $request->user()->id,
-            'status_id' => self::PENDING_STATUS_ID,
-        ];
-        $now = now();
-
-        $id = DB::table('enrollments')->insertGetId([
-            ...$attributes,
-            'created_at' => $now,
-            'updated_at' => $now,
-        ]);
-
-        return (new CreatedEnrollmentResource((object) ['id' => $id, ...$attributes]))
-            ->response()
-            ->setStatusCode(201);
     }
 
     private function toResourceData(object $row): object
