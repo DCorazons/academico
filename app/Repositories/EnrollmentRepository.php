@@ -21,10 +21,4 @@ class EnrollmentRepository implements EnrollmentRepositoryInterface
             ->orderBy('id')
             ->get();
     }
-
-    public function create(array $attributes): Enrollment
-    {
-        // Model events and activity logs stay out of the work measured on this endpoint
-        return Enrollment::withoutEvents(fn () => Enrollment::query()->create($attributes));
-    }
 }
