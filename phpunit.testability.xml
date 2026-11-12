@@ -29,12 +29,14 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array" force="true"/>
-        <env name="DB_CONNECTION" value="mariadb" force="true"/>
-        <env name="DB_HOST" value="mariadb" force="true"/>
-        <env name="DB_PORT" value="3306" force="true"/>
-        <env name="DB_DATABASE" value="academico_testing" force="true"/>
-        <env name="DB_USERNAME" value="academico" force="true"/>
-        <env name="DB_PASSWORD" value="secret" force="true"/>
+        <!-- The dev container sets DB_* in $_SERVER, which Laravel reads before $_ENV.
+             Without these server entries the tests would refresh the dev database. -->
+        <server name="DB_CONNECTION" value="mariadb" force="true"/>
+        <server name="DB_HOST" value="mariadb" force="true"/>
+        <server name="DB_PORT" value="3306" force="true"/>
+        <server name="DB_DATABASE" value="academico_testing" force="true"/>
+        <server name="DB_USERNAME" value="academico" force="true"/>
+        <server name="DB_PASSWORD" value="secret" force="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="SESSION_DRIVER" value="array" force="true"/>
