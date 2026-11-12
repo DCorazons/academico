@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    Testability measurement (thesis proposal, table 3.7): unit tests of the Service
+    Layer of the four modules. The Active Record suite needs a database, so it uses a
+    separate MariaDB test database; the Repository suite replaces repositories by mocks.
+    Run with tests/testability.sh.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Testability">
+            <directory>tests/Unit/Services</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <file>app/Services/TeacherService.php</file>
+            <file>app/Services/CourseService.php</file>
+            <file>app/Services/EnrollmentService.php</file>
+            <file>app/Services/CourseReportService.php</file>
+        </include>
+    </source>
+    <php>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="BROADCAST_CONNECTION" value="null"/>
+        <env name="CACHE_STORE" value="array" force="true"/>
+        <!-- The dev container sets DB_* in $_SERVER, which Laravel reads before $_ENV.
+             Without these server entries the tests would refresh the dev database. -->
+        <server name="DB_CONNECTION" value="mariadb" force="true"/>
+        <server name="DB_HOST" value="mariadb" force="true"/>
+        <server name="DB_PORT" value="3306" force="true"/>
+        <server name="DB_DATABASE" value="academico_testing" force="true"/>
+        <server name="DB_USERNAME" value="academico" force="true"/>
+        <server name="DB_PASSWORD" value="secret" force="true"/>
+        <env name="MAIL_MAILER" value="array"/>
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
+        <env name="SESSION_DRIVER" value="array" force="true"/>
+        <env name="ACTIVITYLOG_ENABLED" value="false" force="true"/>
+        <env name="PULSE_ENABLED" value="false"/>
+        <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="NIGHTWATCH_ENABLED" value="false"/>
+    </php>
+</phpunit>

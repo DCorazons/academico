@@ -16,7 +16,6 @@ Route::middleware(['peak_memory', 'auth:api'])->group(function () {
     Route::get('/courses/{id}', [CourseController::class, 'show'])->whereNumber('id');
 
     Route::get('/students/{id}/enrollments', [EnrollmentController::class, 'index'])->whereNumber('id');
-    Route::post('/enrollments', [EnrollmentController::class, 'store']);
 
     Route::get('/reports/courses', [CourseReportController::class, 'index']);
 });
