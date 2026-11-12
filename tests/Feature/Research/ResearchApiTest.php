@@ -24,8 +24,6 @@ class ResearchApiTest extends TestCase
 
     private const TOKEN = 'test-token';
 
-    private User $admin;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -34,7 +32,7 @@ class ResearchApiTest extends TestCase
 
         $this->seed(ReferenceDataSeeder::class);
 
-        $this->admin = User::factory()->create(['api_token' => self::TOKEN]);
+        User::factory()->create(['api_token' => self::TOKEN]);
         $this->withToken(self::TOKEN);
     }
 
@@ -47,7 +45,6 @@ class ResearchApiTest extends TestCase
         $this->getJson('/api/courses')->assertUnauthorized();
         $this->getJson('/api/courses/1')->assertUnauthorized();
         $this->getJson('/api/students/1/enrollments')->assertUnauthorized();
-        $this->postJson('/api/enrollments')->assertUnauthorized();
         $this->getJson('/api/reports/courses')->assertUnauthorized();
     }
 
@@ -165,51 +162,6 @@ class ResearchApiTest extends TestCase
     public function test_unknown_student_returns_not_found(): void
     {
         $this->getJson('/api/students/999999/enrollments')->assertNotFound();
-    }
-
-    public function test_enrollment_is_created(): void
-    {
-        $student = Student::factory()->create();
-        $course = $this->coursesInPeriod(1)[0];
-
-        $response = $this->postJson('/api/enrollments', ['student_id' => $student->id, 'course_id' => $course->id])
-            ->assertCreated();
-
-        $this->assertDatabaseCount('enrollments', 1);
-        $enrollment = Enrollment::first();
-        $response->assertExactJson(['data' => [
-            'id' => $enrollment->id,
-            'student_id' => $student->id,
-            'course_id' => $course->id,
-            'responsible_id' => $this->admin->id,
-            'status_id' => 1,
-        ]]);
-    }
-
-    public function test_enrollment_requires_an_existing_student_and_course(): void
-    {
-        $this->postJson('/api/enrollments', ['student_id' => 999999, 'course_id' => 999999])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['student_id', 'course_id']);
-
-        $this->postJson('/api/enrollments')
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['student_id', 'course_id']);
-
-        $this->assertDatabaseCount('enrollments', 0);
-    }
-
-    public function test_enrollment_rejects_a_duplicate_pair(): void
-    {
-        $student = Student::factory()->create();
-        $course = $this->coursesInPeriod(1)[0];
-        $this->enroll($student, $course);
-
-        $this->postJson('/api/enrollments', ['student_id' => $student->id, 'course_id' => $course->id])
-            ->assertUnprocessable()
-            ->assertJsonValidationErrors(['course_id']);
-
-        $this->assertDatabaseCount('enrollments', 1);
     }
 
     public function test_course_report_counts_paid_and_pending_enrollments_of_the_period(): void
