@@ -2,26 +2,23 @@
 
 namespace Tests\Unit\Services;
 
+use App\Contracts\CourseRepositoryInterface;
 use App\Models\Course;
-use App\Models\Period;
-use App\Models\Teacher;
 use App\Services\CourseService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Mockery;
 use Tests\TestCase;
 
-/** Testability, Active Record: the Service calls Eloquent, so the tests need a database. */
+/** Testability, Repository: the repository is replaced by a mock, without a database. */
 class CourseServiceTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_paginate_uses_twenty_items_per_page(): void
     {
-        Course::factory()->count(21)->create([
-            'teacher_id' => Teacher::factory()->create()->id,
-            'period_id' => Period::factory()->create()->id,
-        ]);
-        $service = new CourseService;
+        $courses = collect(range(1, 20))->map(fn (int $id) => (new Course)->forceFill(['id' => $id]));
+        $repository = Mockery::mock(CourseRepositoryInterface::class);
+        $repository->shouldReceive('paginate')->once()->with(20)->andReturn(new LengthAwarePaginator($courses, 21, 20));
+        $service = new CourseService($repository);
 
         $page = $service->paginate();
 
@@ -31,8 +28,10 @@ class CourseServiceTest extends TestCase
 
     public function test_find_returns_the_requested_course(): void
     {
-        $course = Course::factory()->create();
-        $service = new CourseService;
+        $course = (new Course)->forceFill(['id' => 7]);
+        $repository = Mockery::mock(CourseRepositoryInterface::class);
+        $repository->shouldReceive('findOrFail')->once()->with(7)->andReturn($course);
+        $service = new CourseService($repository);
 
         $found = $service->find($course->id);
 
@@ -41,7 +40,10 @@ class CourseServiceTest extends TestCase
 
     public function test_find_fails_for_an_unknown_course(): void
     {
-        $service = new CourseService;
+        $repository = Mockery::mock(CourseRepositoryInterface::class);
+        $repository->shouldReceive('findOrFail')->once()->with(999999)
+            ->andThrow((new ModelNotFoundException)->setModel(Course::class, [999999]));
+        $service = new CourseService($repository);
 
         $this->expectException(ModelNotFoundException::class);
 

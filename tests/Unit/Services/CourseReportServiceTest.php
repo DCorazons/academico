@@ -2,31 +2,25 @@
 
 namespace Tests\Unit\Services;
 
+use App\Contracts\CourseRepositoryInterface;
 use App\Models\Course;
-use App\Models\Enrollment;
-use App\Models\Period;
-use App\Models\Student;
 use App\Services\CourseReportService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Eloquent\Collection;
+use Mockery;
 use Tests\TestCase;
 
-/** Testability, Active Record: the Service calls Eloquent, so the tests need a database. */
+/** Testability, Repository: the repository is replaced by a mock, without a database. */
 class CourseReportServiceTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_for_period_returns_the_enrollment_count_of_each_course(): void
     {
-        $period = Period::factory()->create();
-        [$first, $second] = Course::factory()->count(2)->create(['period_id' => $period->id])->all();
-        Enrollment::withoutEvents(function () use ($first) {
-            foreach (Student::factory()->count(2)->create() as $student) {
-                Enrollment::create(['student_id' => $student->id, 'course_id' => $first->id, 'status_id' => 2]);
-            }
-        });
-        $service = new CourseReportService;
+        $first = (new Course)->forceFill(['id' => 1, 'period_id' => 7, 'enrollments_count' => 2]);
+        $second = (new Course)->forceFill(['id' => 2, 'period_id' => 7, 'enrollments_count' => 0]);
+        $repository = Mockery::mock(CourseRepositoryInterface::class);
+        $repository->shouldReceive('withEnrollmentCountForPeriod')->once()->with(7)->andReturn(new Collection([$first, $second]));
+        $service = new CourseReportService($repository);
 
-        $courses = $service->forPeriod($period->id);
+        $courses = $service->forPeriod(7);
 
         $this->assertSame(
             [$first->id => 2, $second->id => 0],
