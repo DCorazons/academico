@@ -2,22 +2,25 @@
 
 namespace Tests\Unit\Services;
 
+use App\Contracts\CourseRepositoryInterface;
 use App\Models\Course;
 use App\Models\Period;
 use App\Models\Teacher;
 use App\Services\CourseService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Mockery;
 use Tests\TestCase;
 
 class CourseServiceTest extends TestCase
 {
-    use RefreshDatabase;
-
     public function test_paginate_returns_20_courses_per_page_ordered_by_id(): void
     {
-        $courses = $this->createCourses(21);
-        $service = new CourseService;
+        $courses = collect(range(1, 21));
+        $repository = Mockery::mock(CourseRepositoryInterface::class);
+        $repository->shouldReceive('paginateWithPeriodAndTeacher')->once()->with(20)
+            ->andReturn(new LengthAwarePaginator($this->courses($courses->take(20)), 21, 20, 1));
+        $service = new CourseService($repository);
 
         $page = $service->paginate();
 
@@ -28,8 +31,13 @@ class CourseServiceTest extends TestCase
 
     public function test_paginate_loads_the_period_and_the_teacher(): void
     {
-        $this->createCourses(1);
-        $service = new CourseService;
+        $course = $this->courses(collect([1]))->first()
+            ->setRelation('period', new Period)
+            ->setRelation('teacher', new Teacher);
+        $repository = Mockery::mock(CourseRepositoryInterface::class);
+        $repository->shouldReceive('paginateWithPeriodAndTeacher')->once()->with(20)
+            ->andReturn(new LengthAwarePaginator([$course], 1, 20, 1));
+        $service = new CourseService($repository);
 
         $course = $service->paginate()->items()[0];
 
@@ -37,12 +45,9 @@ class CourseServiceTest extends TestCase
         $this->assertTrue($course->relationLoaded('teacher'));
     }
 
-    /** @return Collection<int, int> ids of the created courses, ascending */
-    private function createCourses(int $count): Collection
+    /** @param  Collection<int, int>  $ids */
+    private function courses(Collection $ids): Collection
     {
-        return Course::factory()->count($count)->create([
-            'period_id' => Period::factory()->create()->id,
-            'teacher_id' => Teacher::factory()->create()->id,
-        ])->pluck('id')->sort()->values();
+        return $ids->map(fn (int $id) => (new Course)->forceFill(['id' => $id]));
     }
 }

@@ -2,70 +2,57 @@
 
 namespace Tests\Unit\Services;
 
+use App\Contracts\CourseRepositoryInterface;
 use App\Models\Course;
-use App\Models\Enrollment;
 use App\Models\Exam;
-use App\Models\ExamSubmission;
-use App\Models\Material;
-use App\Models\Student;
 use App\Services\DashboardService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\Eloquent\Collection;
+use Mockery;
 use Tests\TestCase;
 
 class DashboardServiceTest extends TestCase
 {
-    use RefreshDatabase;
+    private const STUDENT_ID = 35;
 
     public function test_for_student_returns_the_enrolled_courses_ordered_by_id(): void
     {
-        $student = Student::factory()->create();
-        [$first, $other, $second] = Course::factory()->count(3)->create();
-        $this->enroll($student, $second);
-        $this->enroll($student, $first);
-        $this->enroll(Student::factory()->create(), $other);
-        $service = new DashboardService;
+        $first = (new Course)->forceFill(['id' => 1]);
+        $second = (new Course)->forceFill(['id' => 3]);
+        $service = $this->service(new Collection([$first, $second]));
 
-        $courses = $service->forStudent($student->id);
+        $courses = $service->forStudent(self::STUDENT_ID);
 
         $this->assertSame([$first->id, $second->id], $courses->pluck('id')->all());
     }
 
     public function test_for_student_counts_the_materials_of_each_course(): void
     {
-        $student = Student::factory()->create();
-        $course = Course::factory()->create();
-        $this->enroll($student, $course);
-        Material::factory()->count(3)->create(['course_id' => $course->id]);
-        $service = new DashboardService;
+        $course = (new Course)->forceFill(['id' => 1, 'materials_count' => 3]);
+        $service = $this->service(new Collection([$course]));
 
-        $courses = $service->forStudent($student->id);
+        $courses = $service->forStudent(self::STUDENT_ID);
 
         $this->assertSame(3, (int) $courses->first()->materials_count);
     }
 
     public function test_for_student_flags_the_exams_submitted_by_the_student(): void
     {
-        $student = Student::factory()->create();
-        $course = Course::factory()->create();
-        $this->enroll($student, $course);
-        $submitted = Exam::factory()->create(['course_id' => $course->id, 'type' => 'UTS']);
-        $open = Exam::factory()->create(['course_id' => $course->id, 'type' => 'UAS']);
-        ExamSubmission::factory()->create(['exam_id' => $submitted->id, 'student_id' => $student->id]);
-        ExamSubmission::factory()->create(['exam_id' => $open->id]);
-        $service = new DashboardService;
+        $submitted = (new Exam)->forceFill(['id' => 1, 'type' => 'UTS', 'submitted' => 1]);
+        $open = (new Exam)->forceFill(['id' => 2, 'type' => 'UAS', 'submitted' => 0]);
+        $course = (new Course)->forceFill(['id' => 1])->setRelation('exams', new Collection([$submitted, $open]));
+        $service = $this->service(new Collection([$course]));
 
-        $exams = $service->forStudent($student->id)->first()->exams;
+        $exams = $service->forStudent(self::STUDENT_ID)->first()->exams;
 
         $this->assertSame([$submitted->id, $open->id], $exams->pluck('id')->all());
         $this->assertSame([true, false], $exams->map(fn ($exam) => (bool) $exam->submitted)->all());
     }
 
-    private function enroll(Student $student, Course $course): void
+    private function service(Collection $courses): DashboardService
     {
-        Enrollment::withoutEvents(fn () => Enrollment::query()->create([
-            'student_id' => $student->id,
-            'course_id' => $course->id,
-            'status_id' => 2,
-        ]));
+        $repository = Mockery::mock(CourseRepositoryInterface::class);
+        $repository->shouldReceive('enrolledByStudentWithMaterialCountAndExams')->once()->with(self::STUDENT_ID)->andReturn($courses);
+
+        return new DashboardService($repository);
     }
 }
