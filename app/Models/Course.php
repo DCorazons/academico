@@ -219,6 +219,16 @@ class Course extends Model
         return $this->belongsTo(Partner::class);
     }
 
+    public function materials(): HasMany
+    {
+        return $this->hasMany(Material::class, 'course_id');
+    }
+
+    public function exams(): HasMany
+    {
+        return $this->hasMany(Exam::class, 'course_id');
+    }
+
     public function saveCourseTimes($newCourseTimes)
     {
         // before updating, retrieve existing course times

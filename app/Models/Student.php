@@ -165,6 +165,11 @@ class Student extends Model implements HasMedia
             ->orderByDesc('created_at');
     }
 
+    public function examSubmissions(): HasMany
+    {
+        return $this->hasMany(ExamSubmission::class, 'student_id');
+    }
+
     public function institution(): BelongsTo
     {
         return $this->belongsTo(Institution::class);
