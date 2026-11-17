@@ -3,7 +3,9 @@
 namespace Tests\Feature\Research;
 
 use App\Http\Middleware\RecordPeakMemory;
+use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
@@ -29,10 +31,27 @@ class ApiAccessTest extends TestCase
         $this->insertUser(2, 'student', self::STUDENT_TOKEN);
         DB::table('students')->insert(['id' => 2]);
 
-        Route::middleware(['peak_memory', 'auth:api', 'api_role:admin'])
+        // Same groups and middleware as routes/api.php
+        Route::middleware(['api', 'peak_memory', 'auth:api', 'api_role:admin'])
             ->get('/api/_probe/admin', fn () => response()->json(['ok' => true]));
-        Route::middleware(['peak_memory', 'auth:api', 'api_role:student'])
+        Route::middleware(['api', 'peak_memory', 'auth:api', 'api_role:student'])
             ->get('/api/_probe/student', fn () => response()->json(['ok' => true]));
+    }
+
+    public function test_peak_memory_runs_before_authentication(): void
+    {
+        $route = Route::getRoutes()->match(Request::create('/api/_probe/admin'));
+
+        $order = array_map(
+            fn ($middleware) => explode(':', $middleware)[0],
+            app('router')->gatherRouteMiddleware($route),
+        );
+
+        $this->assertLessThan(
+            array_search(Authenticate::class, $order, true),
+            array_search(RecordPeakMemory::class, $order, true),
+            'Middleware order: '.implode(', ', $order),
+        );
     }
 
     public function test_requests_without_a_token_get_a_json_401(): void
