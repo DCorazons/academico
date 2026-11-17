@@ -20,7 +20,9 @@ class EnrollmentResource extends JsonResource
             ],
             'status' => [
                 'id' => $this->enrollmentStatus->id,
-                // Translated column: the text for the application locale
+                // JSON column read by HasFallbackTranslations, which ignores the
+                // application locale and takes the first of fr, es, en, then any value.
+                // ReferenceDataSeeder stores the fr text only, for example "PAYÉ".
                 'name' => $this->enrollmentStatus->name,
             ],
         ];
