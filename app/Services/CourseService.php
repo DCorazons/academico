@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Course;
+use App\Contracts\CourseRepositoryInterface;
 use App\Services\Contracts\CourseServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
@@ -10,12 +10,10 @@ class CourseService implements CourseServiceInterface
 {
     private const PER_PAGE = 20;
 
+    public function __construct(private CourseRepositoryInterface $courses) {}
+
     public function paginate(): LengthAwarePaginator
     {
-        return Course::query()
-            ->without(['times', 'evaluationType'])
-            ->with(['period', 'teacher'])
-            ->orderBy('id')
-            ->paginate(self::PER_PAGE);
+        return $this->courses->paginateWithPeriodAndTeacher(self::PER_PAGE);
     }
 }

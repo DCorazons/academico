@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
-use App\Models\Enrollment;
+use App\Contracts\EnrollmentRepositoryInterface;
+use App\Contracts\ExamAnswerRepositoryInterface;
+use App\Contracts\ExamQuestionRepositoryInterface;
+use App\Contracts\ExamRepositoryInterface;
+use App\Contracts\ExamSubmissionRepositoryInterface;
 use App\Models\Exam;
-use App\Models\ExamAnswer;
-use App\Models\ExamQuestion;
 use App\Models\ExamSubmission;
 use App\Services\Contracts\ExamServiceInterface;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -19,47 +21,49 @@ class ExamService implements ExamServiceInterface
 
     public const ANSWERS_MISMATCH = 'Every question of the exam must be answered exactly once.';
 
+    public function __construct(
+        private EnrollmentRepositoryInterface $enrollments,
+        private ExamRepositoryInterface $exams,
+        private ExamQuestionRepositoryInterface $questions,
+        private ExamSubmissionRepositoryInterface $submissions,
+        private ExamAnswerRepositoryInterface $answers,
+    ) {}
+
     public function showForStudent(int $examId, int $studentId): Exam
     {
-        $exam = Exam::query()->findOrFail($examId);
+        $exam = $this->exams->findOrFail($examId);
 
         $this->ensureEnrolled($exam->course_id, $studentId);
 
-        return $exam->load(['questions' => fn ($query) => $query->orderBy('id')]);
+        return $this->exams->loadQuestions($exam);
     }
 
     public function submit(int $examId, int $studentId, array $answers): ExamSubmission
     {
-        $exam = Exam::query()->findOrFail($examId);
+        $exam = $this->exams->findOrFail($examId);
 
         $this->ensureEnrolled($exam->course_id, $studentId);
 
-        $alreadySubmitted = ExamSubmission::query()
-            ->where('exam_id', $examId)
-            ->where('student_id', $studentId)
-            ->exists();
+        $alreadySubmitted = $this->submissions->exists($examId, $studentId);
 
         if ($alreadySubmitted) {
             throw ValidationException::withMessages(['exam' => self::ALREADY_SUBMITTED]);
         }
 
-        $questions = ExamQuestion::query()
-            ->where('exam_id', $examId)
-            ->orderBy('id')
-            ->get();
+        $questions = $this->questions->forExam($examId);
 
         $grades = $this->grade($questions->pluck('correct_option', 'id')->all(), $answers);
 
         try {
             return DB::transaction(function () use ($examId, $studentId, $grades) {
-                $submission = ExamSubmission::query()->create([
+                $submission = $this->submissions->create([
                     'exam_id' => $examId,
                     'student_id' => $studentId,
                     'correct_count' => $grades['correct_count'],
                     'score' => $grades['score'],
                 ]);
 
-                ExamAnswer::query()->insert(array_map(
+                $this->answers->insert(array_map(
                     fn (array $answer) => ['exam_submission_id' => $submission->id, ...$answer],
                     $grades['answers'],
                 ));
@@ -74,10 +78,7 @@ class ExamService implements ExamServiceInterface
 
     private function ensureEnrolled(int $courseId, int $studentId): void
     {
-        $isEnrolled = Enrollment::query()
-            ->where('course_id', $courseId)
-            ->where('student_id', $studentId)
-            ->exists();
+        $isEnrolled = $this->enrollments->isEnrolled($courseId, $studentId);
 
         if (! $isEnrolled) {
             throw new AuthorizationException;

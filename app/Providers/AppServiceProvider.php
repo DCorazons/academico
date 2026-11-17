@@ -2,10 +2,24 @@
 
 namespace App\Providers;
 
+use App\Contracts\CourseRepositoryInterface;
+use App\Contracts\EnrollmentRepositoryInterface;
+use App\Contracts\ExamAnswerRepositoryInterface;
+use App\Contracts\ExamQuestionRepositoryInterface;
+use App\Contracts\ExamRepositoryInterface;
+use App\Contracts\ExamSubmissionRepositoryInterface;
+use App\Contracts\MaterialRepositoryInterface;
 use App\Interfaces\CertificatesInterface;
 use App\Interfaces\EnrollmentSheetInterface;
 use App\Interfaces\InvoicingInterface;
 use App\Interfaces\MailingSystemInterface;
+use App\Repositories\CourseRepository;
+use App\Repositories\EnrollmentRepository;
+use App\Repositories\ExamAnswerRepository;
+use App\Repositories\ExamQuestionRepository;
+use App\Repositories\ExamRepository;
+use App\Repositories\ExamSubmissionRepository;
+use App\Repositories\MaterialRepository;
 use App\Services\Contracts\CourseReportServiceInterface;
 use App\Services\Contracts\CourseServiceInterface;
 use App\Services\Contracts\DashboardServiceInterface;
@@ -37,6 +51,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MaterialServiceInterface::class, MaterialService::class);
         $this->app->bind(ExamServiceInterface::class, ExamService::class);
         $this->app->bind(CourseReportServiceInterface::class, CourseReportService::class);
+
+        // Repositories used by the services
+        $this->app->bind(CourseRepositoryInterface::class, CourseRepository::class);
+        $this->app->bind(EnrollmentRepositoryInterface::class, EnrollmentRepository::class);
+        $this->app->bind(MaterialRepositoryInterface::class, MaterialRepository::class);
+        $this->app->bind(ExamRepositoryInterface::class, ExamRepository::class);
+        $this->app->bind(ExamQuestionRepositoryInterface::class, ExamQuestionRepository::class);
+        $this->app->bind(ExamSubmissionRepositoryInterface::class, ExamSubmissionRepository::class);
+        $this->app->bind(ExamAnswerRepositoryInterface::class, ExamAnswerRepository::class);
 
         $this->app->bind(InvoicingInterface::class, function () {
             $driver = config('invoicing.invoicing_system');
