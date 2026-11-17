@@ -10,7 +10,7 @@ class Material extends Model
 {
     use HasFactory;
 
-    protected $guarded = ['id'];
+    protected $fillable = ['course_id', 'meeting', 'title', 'content'];
 
     public function course(): BelongsTo
     {

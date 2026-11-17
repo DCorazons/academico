@@ -12,7 +12,7 @@ class ExamAnswer extends Model
 
     public $timestamps = false;
 
-    protected $guarded = ['id'];
+    protected $fillable = ['exam_submission_id', 'exam_question_id', 'selected_option', 'is_correct'];
 
     protected $casts = [
         'is_correct' => 'boolean',

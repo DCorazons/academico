@@ -11,7 +11,7 @@ class Exam extends Model
 {
     use HasFactory;
 
-    protected $guarded = ['id'];
+    protected $fillable = ['course_id', 'type', 'title'];
 
     public function course(): BelongsTo
     {
