@@ -8,6 +8,10 @@
 node_modules
 vendor
 storage/*.key
+# Symlink made by storage:link in the dev container; the production image makes its own
+public/storage
+# Package and provider caches of the dev container list dev-only packages
+bootstrap/cache/*.php
 .phpunit.cache
 Homestead.json
 Homestead.yaml

@@ -17,7 +17,7 @@ COPY . .
 RUN composer dump-autoload --no-dev --optimize
 
 # Stage 3: PHP runtime shared by the development and production images
-FROM dunglas/frankenphp:1-php8.5 AS base
+FROM dunglas/frankenphp:1.13.4-php8.5.12 AS base
 
 WORKDIR /app
 
@@ -48,6 +48,10 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 ENV COMPOSER_ALLOW_SUPERUSER=1
+
+# Code coverage driver for the testability measurement, off unless a run enables it
+RUN install-php-extensions pcov \
+    && echo "pcov.enabled=0" > "$PHP_INI_DIR/conf.d/zz-pcov.ini"
 
 COPY docker/dev-entrypoint.sh /usr/local/bin/dev-entrypoint
 RUN chmod +x /usr/local/bin/dev-entrypoint

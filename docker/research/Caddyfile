@@ -1,0 +1,34 @@
+# Caddyfile of the test stacks: docker/Caddyfile without the access log, so that
+# the server writes nothing per request during a test run. FrankenPHP runs in
+# classic mode (php_server without worker).
+{
+    auto_https off
+    admin off
+}
+
+{$SERVER_NAME:localhost} {
+    root * /app/public
+
+    # Enable FrankenPHP
+    php_server
+
+    # Prevent access to sensitive files
+    @disallowed {
+        path /.env*
+        path /storage/*
+        path /.git/*
+        file {
+            try_files {path}
+        }
+    }
+    respond @disallowed 404
+
+    # Serve static files or fallthrough to PHP
+    file_server
+
+    # Handle Laravel routes
+    try_files {path} {path}/ /index.php?{query}
+
+    # PHP configuration
+    encode gzip
+}
