@@ -11,7 +11,9 @@ class ExamSubmission extends Model
 {
     use HasFactory;
 
-    protected $guarded = ['id'];
+    // An explicit list: with $guarded, create() reads the table columns from
+    // information_schema once per process, that is on every request in classic mode
+    protected $fillable = ['exam_id', 'student_id', 'correct_count', 'score'];
 
     public function exam(): BelongsTo
     {

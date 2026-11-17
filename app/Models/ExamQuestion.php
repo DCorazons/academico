@@ -10,7 +10,7 @@ class ExamQuestion extends Model
 {
     use HasFactory;
 
-    protected $guarded = ['id'];
+    protected $fillable = ['exam_id', 'number', 'question', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option'];
 
     public function exam(): BelongsTo
     {
