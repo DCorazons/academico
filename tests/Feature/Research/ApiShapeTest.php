@@ -64,10 +64,10 @@ class ApiShapeTest extends TestCase
         $this->assertSame($expected, $this->render(new CourseResource($plain)));
     }
 
-    public function test_enrollment_resource_shows_the_translated_status_name(): void
+    public function test_enrollment_resource_shows_the_status_name_read_by_the_fallback_translations(): void
     {
-        $status = new EnrollmentStatusType;
-        $status->forceFill(['id' => 2])->setTranslation('name', 'en', 'PAID');
+        // Same row as the seeded dataset: the fr text only, whatever the application locale
+        $status = (new EnrollmentStatusType)->setRawAttributes(['id' => 2, 'name' => json_encode(['fr' => 'PAYÉ'])]);
         $student = (new Student)->forceFill(['id' => 35, 'idnumber' => '2600000001']);
         $student->setRelation('user', (new User)->forceFill(['firstname' => 'siti', 'lastname' => 'aminah']));
         $model = (new Enrollment)->forceFill(['id' => 1]);
@@ -77,13 +77,13 @@ class ApiShapeTest extends TestCase
         $plain = $this->object([
             'id' => 1,
             'student' => $this->object(['id' => 35, 'idnumber' => '2600000001', 'user' => $this->object(['firstname' => 'siti', 'lastname' => 'aminah'])]),
-            'enrollmentStatus' => $this->object(['id' => 2, 'name' => 'PAID']),
+            'enrollmentStatus' => $this->object(['id' => 2, 'name' => 'PAYÉ']),
         ]);
 
         $expected = [
             'id' => 1,
             'student' => ['id' => 35, 'idnumber' => '2600000001', 'firstname' => 'Siti', 'lastname' => 'AMINAH'],
-            'status' => ['id' => 2, 'name' => 'PAID'],
+            'status' => ['id' => 2, 'name' => 'PAYÉ'],
         ];
 
         $this->assertSame($expected, $this->render(new EnrollmentResource($model)));
