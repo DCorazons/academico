@@ -12,7 +12,9 @@ services:
       target: production
     cpuset: "1"
     ports:
-      - "${APP_PORT:?Set APP_PORT in .env}:80"
+      # Localhost only: k6 and the research console run on the same VPS, and no
+      # request from outside may reach the application or add load during a run
+      - "127.0.0.1:${APP_PORT:?Set APP_PORT in .env}:80"
     env_file: .env
     environment:
       - SERVER_NAME=:80
