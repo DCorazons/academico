@@ -54,9 +54,12 @@ $normalize = function (string $html): string {
 };
 
 $send = function (string $label, string $method, string $uri, array $form = []) use ($app, $kernel, &$cookies, &$csrf, &$previous, $normalize) {
-    // Each request starts like a new process: no user or session kept in memory
+    // Each request starts like a new process: no user, session, or redirector (which
+    // keeps the session store it was built with, for flash data and errors) in memory
     $app['auth']->forgetGuards();
     $app['session']->forgetDrivers();
+    $app->forgetInstance('session.store');
+    $app->forgetInstance('redirect');
 
     $queries = [];
     DB::listen(function (QueryExecuted $query) use (&$queries) {
