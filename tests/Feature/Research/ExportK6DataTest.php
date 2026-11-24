@@ -32,6 +32,9 @@ class ExportK6DataTest extends TestCase
         $pairs = $this->read('write-pairs.json');
 
         $this->assertSame(config('research.api_token'), $meta['admin_token']);
+        $this->assertSame('admin', $meta['admin_username']);
+        $this->assertSame(ResearchSeeder::PASSWORD, $meta['password']);
+        $this->assertSame('student0001', $students[0]['username']);
         $this->assertCount(ResearchSeeder::COURSES, $meta['course_ids']);
         $this->assertCount(ResearchSeeder::STUDENTS, $students);
         $this->assertSame(range(ResearchSeeder::FIRST_STUDENT_ID, ResearchSeeder::FIRST_STUDENT_ID + ResearchSeeder::STUDENTS - 1), array_column($students, 'id'));
