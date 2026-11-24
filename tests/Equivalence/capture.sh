@@ -15,7 +15,7 @@ OUTPUT=storage/app/equivalence
 MYSQL="mysql -h mariadb -uroot -psecret --skip-ssl"
 
 export DB_DATABASE=research_equivalence APP_DEBUG=false ACTIVITYLOG_ENABLED=false \
-    CACHE_STORE=null SESSION_DRIVER=database QUEUE_CONNECTION=sync
+    CACHE_STORE=null SESSION_DRIVER=database QUEUE_CONNECTION=sync BCRYPT_ROUNDS=10
 
 seed() {
     $MYSQL -e "DROP DATABASE IF EXISTS research_equivalence; CREATE DATABASE research_equivalence; GRANT ALL ON research_equivalence.* TO 'academico'@'%';"
