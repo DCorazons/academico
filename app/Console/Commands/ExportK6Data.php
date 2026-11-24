@@ -73,6 +73,9 @@ class ExportK6Data extends Command
         return [
             'seed' => self::SEED,
             'admin_token' => DB::table('users')->where('id', ResearchSeeder::ADMIN_ID)->value('api_token'),
+            // Session login of the research pages: every seeded user has the same password
+            'admin_username' => DB::table('users')->where('id', ResearchSeeder::ADMIN_ID)->value('username'),
+            'password' => ResearchSeeder::PASSWORD,
             'period_id' => DB::table('periods')->orderBy('id')->value('id'),
             'course_ids' => DB::table('courses')->orderBy('id')->pluck('id')->all(),
         ];
@@ -82,14 +85,15 @@ class ExportK6Data extends Command
      * Students ordered by id, each with the courses it is enrolled in and the exams
      * of those courses, both ordered by id.
      *
-     * @return array<int, array{id: int, token: string, course_ids: array<int, int>, exam_ids: array<int, int>}>
+     * @return array<int, array{id: int, username: string, token: string, course_ids: array<int, int>, exam_ids: array<int, int>}>
      */
     private function students(): array
     {
-        $tokens = DB::table('users')
+        $users = DB::table('users')
             ->whereIn('id', DB::table('students')->select('id'))
             ->orderBy('id')
-            ->pluck('api_token', 'id');
+            ->get(['id', 'username', 'api_token'])
+            ->keyBy('id');
 
         $coursesByStudent = DB::table('enrollments')
             ->orderBy('student_id')
@@ -101,7 +105,7 @@ class ExportK6Data extends Command
 
         $students = [];
 
-        foreach ($tokens as $id => $token) {
+        foreach ($users as $id => $user) {
             $courseIds = $coursesByStudent->get($id, collect())->pluck('course_id')->map(fn ($courseId) => (int) $courseId)->all();
             $examIds = [];
 
@@ -112,7 +116,13 @@ class ExportK6Data extends Command
             }
 
             sort($examIds);
-            $students[(int) $id] = ['id' => (int) $id, 'token' => $token, 'course_ids' => $courseIds, 'exam_ids' => $examIds];
+            $students[(int) $id] = [
+                'id' => (int) $id,
+                'username' => $user->username,
+                'token' => $user->api_token,
+                'course_ids' => $courseIds,
+                'exam_ids' => $examIds,
+            ];
         }
 
         return $students;

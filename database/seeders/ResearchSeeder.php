@@ -54,7 +54,10 @@ class ResearchSeeder extends Seeder
 
     private const SEEDED_AT = '2026-08-01 00:00:00';
 
-    // Same hash as the default admin of DatabaseSeeder ("secret")
+    // Password of every seeded user, for the session login of the research pages
+    public const PASSWORD = 'secret';
+
+    // Same hash as the default admin of DatabaseSeeder (PASSWORD)
     private const PASSWORD_HASH = '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm';
 
     private const CHUNK_SIZE = 500;
