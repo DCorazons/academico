@@ -23,6 +23,10 @@ $kernel->bootstrap();
 
 Carbon::setTestNow('2026-11-17 08:00:00');
 
+// The session garbage collection runs on a random 2 % of requests; keep it out of
+// the capture so that two runs give the same output
+config(['session.lottery' => [0, 100]]);
+
 $studentId = 35;
 $adminName = DB::table('users')->where('id', ResearchSeeder::ADMIN_ID)->value('username');
 $studentName = DB::table('users')->where('id', $studentId)->value('username');
